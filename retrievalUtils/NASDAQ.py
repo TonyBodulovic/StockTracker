@@ -12,6 +12,7 @@ class NASDAQ:
         self.APILINKS = {
             "Summary" : ("https://api.nasdaq.com/api/quote/","/info?assetclass=stocks"),
         }
+        return
 
     def fetchAPIRequest(self,Symbol,InfoType):
 
@@ -71,6 +72,9 @@ class NASDAQ:
         if tempDate != None:
 
             if tempDate.find("AM ET")!= -1 or tempDate.find("PM ET") != -1:
+                shiftNoon = 0
+                if tempDate.find("PM ET") != -1:
+                    shiftNoon = 12
                 tempDate = tempDate.replace(" AM ET","")
                 tempDate = tempDate.replace(" PM ET","")
                 tempDate = tempDate.split(",")
@@ -78,7 +82,7 @@ class NASDAQ:
                 
                 time = tempDate[1].split(" ")[1]
                 time = time.split(":")
-                time = "{:02d}:{:02d}:00".format(int(time[0]),int(time[1]))
+                time = "{:02d}:{:02d}:00".format(int(time[0])+shiftNoon,int(time[1]))
 
                 day = "{:02d}".format(int(tempDate[0].split(" ")[1]))
                 month = self._monthToNumber(tempDate[0].split(" ")[0])

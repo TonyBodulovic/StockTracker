@@ -101,23 +101,29 @@ class DatabaseHandler:
         -> Indexes of columns and values are linked
         Returns true/false on success/fail
         """
-        columns = []
-        values = []
+        selectColumns = []
+        selectValues = []
+        insertColumns = []
+        insertValues = []
 
         for column, value in valueDict.items():
+            selectColumns.append(str(column))
+            selectValues.append(value)
             if value != None:
-                columns.append(str(column))
-                values.append(value)
+                insertColumns.append(str(column))
+                insertValues.append(value)
 
-        if table != "StockPrices":
-            query = "SELECT id FROM {} WHERE {}".format(table,self._formatConditionsToWhere(columns,values))
-            queryResult = self.SelectQuery(query)
-            if queryResult != []:
-                return queryResult[0][0]
+        if table == "AssetDim":
+            query = "SELECT id FROM {} WHERE {}".format(table,self._formatConditionsToWhere(["symbol"],[valueDict["symbol"]]))
+        else:
+            query = "SELECT id FROM {} WHERE {}".format(table,self._formatConditionsToWhere(selectColumns,selectValues))
+        queryResult = self.SelectQuery(query)
+        if queryResult != []:
+            return queryResult[0][0]
 
-        columns = str(tuple(columns)).replace("'","")
-        values = str(tuple(values))
-        query = "INSERT INTO {} {} VALUES {}".format(table,columns,values)
+        insertColumns = str(tuple(insertColumns)).replace("'","")
+        insertValues = str(tuple(insertValues))
+        query = "INSERT INTO {} {} VALUES {}".format(table,insertColumns,insertValues)
 
         try:
             self.Cursor.execute(query)
@@ -161,16 +167,23 @@ class DatabaseHandler:
         if len(columns) != len(values) or len(columns) < 1:
             return ""
         
-        query = "{} = \'{}\'".format(columns[0],values[0])
+        query = DatabaseHandler._formatConditionToString(columns[0],values[0])
         
         if len(columns) == 1:
             return query
 
         andString = " AND "
         for i in range(1,len(columns)):
-            query += andString + "{}=\'{}\'".format(columns[i],values[i])
+            query += andString + DatabaseHandler._formatConditionToString(columns[i],values[i])
         
         return query
+    
+    @staticmethod
+    def _formatConditionToString(variable,value):
+        if value == None:
+            return "{} IS NULL".format(variable)
+        else:
+            return "{}=\'{}\'".format(variable,value)
         
     
     @staticmethod
